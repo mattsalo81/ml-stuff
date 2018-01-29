@@ -1,4 +1,5 @@
 #!/home/syrup/anaconda3/envs/tensorflow/bin/python
+import random
 
 class KNNTable(object):
     """A table structure that is used for K nearest neighbor algorithm
@@ -8,7 +9,7 @@ class KNNTable(object):
     only takes float inputs
     """
 
-    def __init__(num_input_attr, num_output_attr):
+    def __init__(self, num_input_attr, num_output_attr):
         """takes number of input/output attributes"""
         self.num_input = num_input_attr
         self.num_output = num_output_attr
@@ -17,7 +18,7 @@ class KNNTable(object):
         self.min = [None] * self.num_input 
         self.max = [None] * self.num_input 
 
-    def insert_record(x, y):
+    def insert_record(self, x, y):
         """inserts record into list, updates min/max for normalization
         x should be of length specified in init
         y should be of length specified in init"""
@@ -26,37 +27,35 @@ class KNNTable(object):
         self.inputs.append(x)
         self.outputs.append(y)
 
-    def update_min_max(attr_num, value):
+    def update_min_max(self, attr_num, value):
         """updates the stored min/max for the specified attribute"""
         if self.min[attr_num] is None or self.min[attr_num] > value:
             self.min[attr_num] = value
         if self.max[attr_num] is None or self.max[attr_num] < value:
             self.max[attr_num] = value
 
-    def normalize_attr(attr, value):
+    def normalize_attr(self, attr, value):
         """returns the value as a normalized value between 0 and 1 
         where 0 is min value of that attr and 1 is max"""
         norm = (value - self.min[attr])/(self.max[attr] - self.min[attr])
         return norm
 
-    def get_euclidean_distance(record1, record2):
-        """Class/instance method
-        calculates sum of differences squared.""" 
+    def get_euclidean_distance(self, record1, record2):
+        """calculates sum of differences squared.""" 
         dist = 0
-        for attr in len(record1):
-            p1 = normalize_attr(attr, record1[attr])
-            p2 = normalize_attr(attr, record2[attr])
+        for attr in range(len(record1)):
+            p1 = self.normalize_attr(attr, record1[attr])
+            p2 = self.normalize_attr(attr, record2[attr])
             dist += (p1 - p2) ** 2
         dist **= 0.5
         return dist
 
     def get_manhattan_distance(record1, record2):
-        """Class/instance method
-        calculates sum of absolute differences"""
+        """calculates sum of absolute differences"""
         dist = 0
         for attr in len(record1):
-            p1 = normalize_attr(attr, record1[attr])
-            p2 = normalize_attr(attr, record2[attr])
+            p1 = self.normalize_attr(attr, record1[attr])
+            p2 = self.normalize_attr(attr, record2[attr])
             dist += fabs(p1 - p2)
         return dist
 
@@ -70,11 +69,15 @@ class KNNTable(object):
             freq[val] += 1
         most_times = 0
         mode = None
-        for val in inputs:
+        modes = []
+        for val in freq.keys():
             if freq[val] > most_times:
                 most_times = freq[val]
-                mode = val
-        return val
+                modes = [val]
+            elif freq[val] == most_times:
+                modes.append(val)
+
+        return random.choice(modes)
 
     def get_average_of_list(inputs, weights=[]):
         """returns the straight average of all values in the inputs list
@@ -104,7 +107,7 @@ class KNNTable(object):
             return None
         return ave/len(inputs)
 
-    def predict_value_from_k_nearest_neighbors(test_record, k=1,
+    def predict_value_from_k_nearest_neighbors(self, test_record, k=1,
                                                distance_type="euclidean",
                                                vote_type="classify"):
         """finds k nearest neighbors of the test record, then predicts the 
@@ -121,24 +124,25 @@ class KNNTable(object):
             "weighted average"  : average outputs by calculated distance to 
                                   each neighbor
         """
-        dist, nbr, nbr_val = get_k_nearest_neighbors(test_record, k, 
+        dist, nbr, nbr_val = self.get_k_nearest_neighbors(test_record, k, 
                                                      distance_type)
         vote_func = None
         if vote_type == "classify":
-            vote_func = get_most_popular_value
+            vote_func = KNNTable.get_most_popular_value
         elif vote_type == "average":
-            vote_func = get_average_of_list
+            vote_func = KNNTable.get_average_of_list
         elif vote_type =="weighted average":
-            vote_func = get_weighted_average_of_list
+            vote_func = KNNTable.get_weighted_average_of_list
         else:
             raise ValueError(f"unexpected vote_type {vote_type}")
         value = [None] * self.num_output
         for attr in range(self.num_output):
-            value[attr] = vote_func(nbr_bal, dist)
+            value[attr] = vote_func(nbr_val, dist)
         return value
 
 
-    def get_k_nearest_neighbors(test_record, k=1, distance_type="euclidean"):
+    def get_k_nearest_neighbors(self, test_record, k=1, 
+                                distance_type="euclidean"):
         """finds the k nearest neighbors to record inside of instance 
         k defaults to 1 but can be set
         distance_type can be "euclidean" or "manhattan"
@@ -163,9 +167,9 @@ class KNNTable(object):
         distanced_records = {}
         distance_func = None
         if distance_type == "euclidean":
-            distance_func = get_euclidean_distance
+            distance_func = self.get_euclidean_distance
         elif distance_type == "manhattan":
-            distance_func = get_manhattan_distance
+            distance_func = self.get_manhattan_distance
         else:
             raise ValueError(f"no distance calculation \"{distance_type}\"")
         # put each record's index into a dict by the record's distance
@@ -182,7 +186,7 @@ class KNNTable(object):
         dist_index = 0
         # continuously add record indexes until we have at least k or
         # we run out of neighbors to add
-        while len(neigbors) < k and dist_index < len(sorted_dist):
+        while len(neighbors) < k and dist_index < len(sorted_dist):
             # stick all the records 
             this_dist = sorted_dist[dist_index]
             these_neighbors_index = distanced_records[this_dist]
@@ -192,7 +196,7 @@ class KNNTable(object):
                 neighbors.append(self.inputs[this_neighbor])
                 neighbors_outputs.append(self.outputs[this_neighbor])
                 distances.append(this_dist)
-        dist_index += 1
+            dist_index += 1
         return distances, neighbors, neighbors_outputs
 
 
