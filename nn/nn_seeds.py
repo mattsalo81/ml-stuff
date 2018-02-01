@@ -42,5 +42,20 @@ def main():
 
 main()
 
-def loss()
+def predict_scores(x, w1, b1, w2, b2):
+    h1 = x.dot(w1) + b1
+    a1 = np.tanh(h1)
+    h2 = h1.dot(w2) + b2
+    y = np.tanh(h2)
+    return y
+
+def soft_max(array_like):
+    exp_arr = np.exp(array_like)
+    return exp_arr / np.sum(exp_arr, axis=1, keepdims=True)
+
+def calc_loss(x, y, w1, b2, w2, b2):
+    y_pred = soft_max(predict_scores(x, w1, b1, w2, b2))
+    c
+
+
 

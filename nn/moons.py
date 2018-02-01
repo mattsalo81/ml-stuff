@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #np.random.seed(0)
-X, y = sklearn.datasets.make_moons(200, noise=.5)
+X, y = sklearn.datasets.make_moons(10, noise=.5)
 plt.scatter(X[:,0], X[:,1], s=40, c=y, cmap=plt.cm.Spectral)
 # plt.show()
 
@@ -28,7 +28,10 @@ def calculate_loss(model):
     exp_scores = np.exp(z2)
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
     # loss
+    print(probs)
     correct_logprobs = -np.log(probs[range(num_examples), y])
+    thing = probs[range(num_examples), y]
+    print(thing)
     data_loss = np.sum(correct_logprobs)
     # regular
     data_loss += reg_lambda/2 * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
