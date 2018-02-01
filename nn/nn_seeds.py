@@ -14,13 +14,13 @@ def main():
     one_in_x_test = 4
 
 
-    labels, all_x, all_y_unf = csv.read_from_file(input_file, input_dim)
+    labels, all_x, all_y = csv.read_from_file(input_file, input_dim)
     # convert all_y into correctly formatted array
-    all_y =[]
-    for y in all_y_unf:
-        new_row = [0] * output_dim
-        new_row[y-1] = 1
-        all_y.append(new_row)
+    #all_y =[]
+    #for y in all_y_unf:
+    #    new_row = [0] * output_dim
+    #    new_row[y-1] = 1
+    #    all_y.append(new_row)
 
     # split into training set and test set
     train_x, train_y, test_x, test_y = csv.get_training_and_test_sets(
@@ -55,7 +55,11 @@ def soft_max(array_like):
 
 def calc_loss(x, y, w1, b2, w2, b2):
     y_pred = soft_max(predict_scores(x, w1, b1, w2, b2))
-    c
+    # you need to get the probability of the correct class only
+    # use adv slicing
+    correct_prob = y_pred[range(len(x)), y]
+    data_loss = np.sum(-np.log(correct_prob)) / len(x)
+    return data_loss
 
 
 
