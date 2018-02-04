@@ -3,8 +3,7 @@
 import csv_reader as csv
 import numpy as np
 
-# main guard because I don't usually define helper functions in the same
-# scope
+# main guard because I don't usually define functions in the same scope
 def main():
     input_file = "./seeds.csv"
     input_dim = 7
@@ -47,19 +46,35 @@ def predict_scores(x, w1, b1, w2, b2):
     a1 = np.tanh(h1)
     h2 = h1.dot(w2) + b2
     y = np.tanh(h2)
-    return y
+    return h1, a1, h2, y
 
 def soft_max(array_like):
     exp_arr = np.exp(array_like)
     return exp_arr / np.sum(exp_arr, axis=1, keepdims=True)
 
 def calc_loss(x, y, w1, b2, w2, b2):
-    y_pred = soft_max(predict_scores(x, w1, b1, w2, b2))
+    h1, a1, h2, y_pred = soft_max(predict_scores(x, w1, b1, w2, b2))
     # you need to get the probability of the correct class only
     # use adv slicing
     correct_prob = y_pred[range(len(x)), y]
     data_loss = np.sum(-np.log(correct_prob)) / len(x)
     return data_loss
 
+def back_prop(x, y, w1, b1, w2, b2):
+    # calculate output weights for the input
+    h1, a1, h2, predicted_scores = predict_scores(x, w1, b1, w2, b2)
+    predicted_probability = soft_max(predicted_scores)
+    # massage y into same format of predicted output
+    correct_probability = np.zeros([len(y), 2])
+    correct_probability[range(len(y)), y] += 1
+    # get output error as difference between probability and target
+    output_error = predicted_probability - correct_probability
+    # back_prop doesn't have to be calculus, can just be differences.
+    # the change in second layer weights is the sum of all its inputs times
+    # its respective error
+    dw2 = (a2.T).dot(output_error)
+    # change in activation threshold = average error for that neuron
+    db2 = np.sum(output_error, axis=0, keepdims=True)
+    output_error_layer_1 = ?
 
 
