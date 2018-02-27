@@ -2,7 +2,7 @@
 
 import csv_reader as csv
 import numpy as np
-
+import random
 
 
 
@@ -10,12 +10,13 @@ import numpy as np
 def main():
     input_file = "./seeds.csv"
     input_dim = 7
-    hidden_dim = 5
+    hidden_dim = 3
     output_dim = 3
-    epochs = 20000
+    epochs = 100000
     one_in_x_test = 4
-    alpha = .01
-    lam = .01
+    alpha = .001
+    lam = .1
+    bag_size = 30
 
 
     labels, all_x, _all_y = csv.read_from_file(input_file, input_dim)
@@ -52,9 +53,9 @@ def main():
         if (epoch % 1000 == 0):
             sloss = calc_loss(test_x, test_y, w1, b1, w2, b2)
             loss = calc_loss(train_x, train_y, w1, b1, w2, b2)
-            print(f"Test Loss at epoch {epoch} is {sloss}")
-            print(f"Train Loss at epoch {epoch} is {loss}")
-        w1, b1, w2, b2 = back_prop(train_x, train_y, w1, b1,
+            print(f"{epoch},{sloss},{loss}")
+        bag_x, bag_y = bag(bag_size, train_x, train_y)
+        w1, b1, w2, b2 = back_prop(bag_x, bag_y, w1, b1,
                                     w2, b2, alpha, lam)
 
     loss = calc_loss(test_x, test_y, w1, b1, w2, b2)
@@ -62,20 +63,35 @@ def main():
     print("Real")
     print(test_y)
     print("Predicted")
-    print(y)
+    print(np.around(y, decimals=1))
     print(f"final loss is {loss}")
     print(w1)
     print(b1)
     print(w2)
     print(b2)
         
-
+def bag(num_examples, x, y):
+    """returns two numpy arrays of the same general shape, of primary length
+    num_examples, where records are randomly selected from the input set.
+    elements in x and y should still correspond to each other"""
+    indices = range(x.shape[0])
+    bagged_indices = random.sample(indices, num_examples)
+    x_shape = list(x.shape)
+    y_shape = list(y.shape)
+    x_shape[0] = num_examples
+    y_shape[0] = num_examples
+    bagged_x = np.zeros(x_shape)
+    bagged_y = np.zeros(y_shape)
+    for i, to_bag in enumerate(bagged_indices):
+        bagged_x[i,:] = x[to_bag,:]
+        bagged_y[i,:] = y[to_bag,:]
+    return bagged_x, bagged_y
 
 def predict_scores(x, w1, b1, w2, b2):
     h1 = x.dot(w1) + b1
     a1 = np.tanh(h1)
     h2 = h1.dot(w2) + b2
-    y = np.tanh(h2) 
+    y = soft_max(h2)
     return h1, a1, h2, y
 
 def soft_max(array_like):
@@ -84,7 +100,6 @@ def soft_max(array_like):
 
 def calc_loss(x, y, w1, b1, w2, b2):
     h1, a1, h2, y_pred = predict_scores(x, w1, b1, w2, b2)
-    y_pred = soft_max(y_pred)
     # you need to get the probability of the correct class only
     # use adv slicing (ugh just index multiply)
     log_prob = -np.log(y_pred)
@@ -94,8 +109,7 @@ def calc_loss(x, y, w1, b1, w2, b2):
 
 def back_prop(x, y, w1, b1, w2, b2, alpha, lam):
     # calculate output weights for the input
-    h1, a1, h2, predicted_scores = predict_scores(x, w1, b1, w2, b2)
-    pred_prob = soft_max(predicted_scores)
+    h1, a1, h2, pred_prob = predict_scores(x, w1, b1, w2, b2)
     # output_error = 1/2(y_pred - y_targ) ** 2
     # derivative of error = y_pred - y_targ
     de3 = pred_prob - y 
