@@ -4,17 +4,26 @@ from sklearn import datasets
 import sklearn
 import numpy as np
 import matplotlib.pyplot as plt
+import indexed_dataset as i_d
 
 def main():
     #np.random.seed(0)
-    X, y = sklearn.datasets.make_moons(500, noise=.1)
+    X, y = sklearn.datasets.make_moons(9, noise=.2)
+    skew = np.array([[.5, .5], [-.5, .5]])
+    y *= 2
+    y -= 1
+    print(y>0)
+    X = X.dot(skew)
     plt.scatter(X[:,0], X[:,1], s=40, c=y, cmap=plt.cm.Spectral)
-    model = 0
+    data = i_d.IndexedDataset(X, y)
+    for epoch in range(10):
+        print(f"epoch {epoch}")
+        data.new_learner()
 
-    def predict(model, x):
-        return x.sum(axis = 1) 
+    def predict(data, x):
+        return data.classify_matrix(x) 
 
-    plot_decision_boundary(lambda x: predict(model, x), X, y)
+    plot_decision_boundary(lambda x: predict(data, x), X, y)
 
     plt.show()
 

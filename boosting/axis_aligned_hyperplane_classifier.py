@@ -35,4 +35,4 @@ class AxisAlignedHyperplane(object):
     def classify_matrix(self, matrix):
         """Takes a design matrix and returns a classified vector based on
         the stored feature no"""
-        return np.apply_along_axis(self.classify_vector, 0, matrix)
+        return np.apply_along_axis(self.classify_vector, 1, matrix)

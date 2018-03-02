@@ -1,6 +1,34 @@
+#!/home/syrup/anaconda3/envs/tensorflow/bin/python
+
+from sklearn import datasets
+import sklearn
+import numpy as np
+import matplotlib.pyplot as plt
+import indexed_dataset as i_d
+
+def main():
+    #np.random.seed(0)
+    X, y = sklearn.datasets.make_moons(50, noise=.2)
+    skew = np.array([[.5, .5], [-.5, .5]])
+    X = X.dot(skew)
+    y *= 2
+    y -= 1
+    plt.scatter(X[:,0], X[:,1], s=40, c=y, cmap=plt.cm.Spectral)
+    data = i_d.IndexedDataset(X, y)
+    for epoch in range(100):
+        print(f"epoch {epoch}")
+        data.new_learner()
+
+    def predict(data, x):
+        return data.classify_matrix(x) 
+
+    plot_decision_boundary(lambda x: predict(data, x), X, y)
+
+    plt.show()
+
 # Helper function to plot a decision boundary.
 # If you don't fully understand this function don't worry, it just generates the contour plot below.
-def plot_decision_boundary(pred_func):
+def plot_decision_boundary(pred_func, X, y):
     # Set min and max values and give it some padding
     x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
     y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
@@ -13,3 +41,6 @@ def plot_decision_boundary(pred_func):
     # Plot the contour and training examples
     plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral)
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Spectral)
+
+main()
+

@@ -15,8 +15,9 @@ def main():
     epochs = 100000
     one_in_x_test = 4
     alpha = .001
-    lam = .1
-    bag_size = 30
+    alpha_decay = 1
+    lam = .01
+    bag_size = 100
 
 
     labels, all_x, _all_y = csv.read_from_file(input_file, input_dim)
