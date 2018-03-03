@@ -60,13 +60,13 @@ class IndexedDataset(object):
         correct = np.multiply(pred, self.y)
         error = np.minimum(correct, 0) 
         error = np.multiply(error, self.dist)
-        error = - np.sum(error)
+        error = -np.sum(error)
         temp = (1 - error) / error
 
         alpha = (1 / 2) * np.log(temp)
 
         # update distribution
-        self.dist = np.exp(-alpha * correct)
+        self.dist *= np.exp(-alpha * correct)
         self.dist /= np.sum(self.dist)
         self.learners.append(learner)
         self.alpha.append(alpha)
@@ -82,11 +82,14 @@ class IndexedDataset(object):
 
         for feature_no in range(np.size(self.x, axis=1)):
             # iterate every feature
-            sorted_vals = self.get_sorted_indexes_for_feature(feature_no)
-            for bisect_index_i, bisect_index in enumerate(sorted_vals):
+            sorted_index = self.get_sorted_indexes_for_feature(feature_no)
+            sorted_vals = self.x[:, feature_no][sorted_index]
+            ave_vals = [-float("inf")]
+            ave_vals.extend(list(sorted_vals[1:] + sorted_vals[:-1]))
+            ave_vals.append(float("inf"))
+            ave_vals = [0.5 * float(i) for i in ave_vals]
+            for bisect_value in ave_vals:
                 # iterate over every value, sorted low to high.
-
-                bisect_value = self.x[bisect_index, feature_no]
                 plane = ahp.AxisAlignedHyperplane(feature_no, 
                                                   bisect_value,
                                                   direction=1)
@@ -98,32 +101,17 @@ class IndexedDataset(object):
                 # check if best accuracy
                 if accuracy > max_acc:
                     max_acc = accuracy
-                    if bisect_index_i == 0:
-                        max_acc_bis = -float("inf")
-                    elif bisect_index_i == len(sorted_vals) -1:
-                        max_acc_bix = float("inf")
-                    else:
-                        prev_bis = sorted_vals[bisect_index_i - 1]
-                        prev_bis = self.x[prev_bis, feature_no]
-                        max_acc_bis = (bisect_value + prev_bis) / 2
+                    max_acc_bis = bisect_value
                     max_acc_feat = feature_no
                     max_acc_dir = 1
                 accuracy *= -1
                 # check if best accuracy if everything flipped
                 if accuracy > max_acc:
                     max_acc = accuracy
-                    if bisect_index_i == 0:
-                        max_acc_bis = -float("inf")
-                    elif bisect_index_i == len(sorted_vals) - 1:
-                        max_acc_bis = float("inf")
-                    else:
-                        next_bis = sorted_vals[bisect_index_i + 1]
-                        next_bis = self.x[next_bis, feature_no]
-                        max_acc_bis = (bisect_value + next_bis) / 2
+                    max_acc_bis = bisect_value
                     max_acc_feat = feature_no
                     max_acc_dir = -1
 
-        print(f"{max_acc_feat} {max_acc_bis} {max_acc_dir}")
 
         return ahp.AxisAlignedHyperplane(max_acc_feat, 
                                          max_acc_bis, 
